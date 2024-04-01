@@ -3,15 +3,29 @@
 
 /* Parameters */
 
-// Diameter of the base, in milimeters
+// Diameter of the base (mm)
 base_w = 25; // [10:100]
-// Secondary diameter of the base, in milimeters. Only used for the horse bases
+// Secondary diameter of the base (mm). Only used for the horse bases
 base_w2 = 50; // [10:100]
 base_texture=0; //  [0:Plain, 1:PlainHorses, 2:Bricks, 3:BricksHorses, 4:Plates, 5:Grid]
-// Radius of the magnet hole. Add 0.5 for some tolerance
-magnet_r = 5.5; // [2:0.5:10]
-// Height of the hole. Add 0.1 for some tolerance
+// Diameter of the magnet hole (mm). Add 0.5 for some tolerance
+magnet_d = 5.5; // [2:0.5:10]
+// Height of the hole (mm). Add 0.1 for some tolerance
 magnet_h = 1.1; // [1:0.1:3.1]
+
+/* [Bricks] */
+// x size of the bricks (mm)
+brick_x = 6.5; // [2:0.5:20]
+// y size of the bricks (mm)
+brick_y = 4.5; // [2:0.5:20]
+// separation of the bricks, in x, relative to brick_x
+brick_sep_x=1.01; // [1:0.01:1.5]
+// separation of the bricks, in y, relative to brick_y
+brick_sep_y=1.01; // [1:0.01:1.5]
+// factor to sink the top of the brick
+brick_f=0.99; // [0.95:0.01:1]
+// offset of the bricks for odd lines lines (mm)
+brick_offset=3.25; // [0:0.25:10]
 
 /* [Hidden] */
 // note: many dimensions are constant, because I want to match a base I modeled years ago in blender
@@ -40,85 +54,123 @@ module base_body(hole_r, hole_d) {
     }
 }
 
-module magnet_encase(magnet_r, magnet_h, encase_r, encase_h) {
+module magnet_encase(magnet_d, magnet_h, encase_d, encase_h) {
     difference() {
-        cylinder(r=encase_r, h=encase_h);
-        cylinder(r=magnet_r, h=magnet_h*2, $fn=100, center=true);
+        cylinder(d=encase_d, h=encase_h);
+        cylinder(d=magnet_d, h=magnet_h*2, $fn=100, center=true);
     }
 }
 
 ////////////////////// plain surface
-module base_plain(base_w, magnet_r, magnet_h) {
+module base_plain(base_w, magnet_d, magnet_h) {
     scale([base_w / 25, base_w / 25, 1]) {
         union() {
             base_body(hole_r, hole_d);
             translate([0, 0, 2.11]) cylinder(h=base_upper_h, r=base_upper_r);
         }
     }
-    magnet_encase(magnet_r/2, magnet_h, magnet_r/2+2, 2.45);
+    magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
 }
-module base_plain_horses(base_w1, base_w2, magnet_r, magnet_h) {
+module base_plain_horses(base_w1, base_w2, magnet_d, magnet_h) {
     scale([base_w1 / 25, base_w2 / 25, 1]) {
         union() {
             base_body(hole_r, hole_d);
             translate([0, 0, 2.11]) cylinder(h=base_upper_h, r=base_upper_r);
         }
     }
-    translate([0, base_w2/4, 0]) magnet_encase(magnet_r/2, magnet_h, magnet_r/2+2, 2.45);
-    translate([0, -base_w2/4, 0]) magnet_encase(magnet_r/2, magnet_h, magnet_r/2+2, 2.45);
+    translate([0, base_w2/4, 0]) magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
+    translate([0, -base_w2/4, 0]) magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
 }
 
 ////////////////////// bricks surface
-module brick(brick_x, brick_y, brick_h) {
+module brick(x, y, h, r=1, fn=16, f=brick_f) {
+    /* A brick using hull()
     hull() {
-        translate([-brick_x/2, -brick_y/2, base_upper_h/2]) sphere(r=0.5, $fn=12);
-        translate([brick_x/2, -brick_y/2, base_upper_h/2]) sphere(r=0.5, $fn=12);
-        translate([brick_x/2, brick_y/2, base_upper_h/2]) sphere(r=0.5, $fn=12);
-        translate([-brick_x/2, brick_y/2, base_upper_h/2]) sphere(r=0.5, $fn=12);
+        translate([-x/2, -y/2, base_upper_h/2]) sphere(r=0.5, $fn=12);
+        translate([x/2, -y/2, base_upper_h/2]) sphere(r=0.5, $fn=12);
+        translate([x/2, y/2, base_upper_h/2]) sphere(r=0.5, $fn=12);
+        translate([-x/2, y/2, base_upper_h/2]) sphere(r=0.5, $fn=12);
         
-        translate([-brick_x/2, -brick_y/2, -base_upper_h/2]) sphere(r=0.5, $fn=12);
-        translate([brick_x/2, -brick_y/2, -base_upper_h/2]) sphere(r=0.5, $fn=12);
-        translate([brick_x/2, brick_y/2, -base_upper_h/2]) sphere(r=0.5, $fn=12);
-        translate([-brick_x/2, brick_y/2, -base_upper_h/2]) sphere(r=0.5, $fn=12);
+        translate([-x/2, -y/2, -base_upper_h/2]) sphere(r=0.5, $fn=12);
+        translate([x/2, -y/2, -base_upper_h/2]) sphere(r=0.5, $fn=12);
+        translate([x/2, y/2, -base_upper_h/2]) sphere(r=0.5, $fn=12);
+        translate([-x/2, y/2, -base_upper_h/2]) sphere(r=0.5, $fn=12);
+    }*/
+    
+    /* A brick using simple shapes. Faster? */
+    translate([r, r, -r]) union() {
+        translate([0, 0, r]) sphere(r=r, $fn=fn);
+        translate([x-2*r, 0, r]) sphere(r=r, $fn=fn);
+        translate([0, y-2*r, r]) sphere(r=r, $fn=fn);
+        translate([x-2*r, y-2*r, r]) sphere(r=r, $fn=fn);
+        
+        translate([0, y-2*r, r]) rotate([90, 0, 0]) rotate([0, 0, 180/fn]) cylinder(r=r, h=y-2*r, $fn=fn);
+        translate([x-2*r, y-2*r, r]) rotate([90, 0, 0]) rotate([0, 0, 180/fn]) cylinder(r=r, h=y-2*r, $fn=fn);
+        
+        translate([0, y-2*r, r]) rotate([0, 90, 0]) rotate([0, 0, 180/fn]) cylinder(r=r, h=x-2*r, $fn=fn);
+        translate([0, 0, r]) rotate([0, 90, 0]) rotate([0, 0, 180/fn]) cylinder(r=r, h=x-2*r, $fn=fn);
+        
+        translate([0, 0, 0]) cube([x-2*r, y-2*r, r*2*f]);
     }
+    
+    /* A brick using a cuboid
+    You also need:
+    include <BOSL/constants.scad>
+    use <BOSL/shapes.scad>
+    cuboid([x,y,h], fillet=0.5);
+    */
 }
-module bricks_surface(brick_x, brick_y, brick_o, base_w, sep_x=1.2, sep_y=1.2) {
+module bricks_surface(brick_x, brick_y, brick_o, base_w, base_w2, sep_x=1.2, sep_y=1.2, brick_r=1) {
     intersection() {
         // brick_x, brick_y: size of the brick
         // brick_o: offset of each line of the brick
         // base_w: size of the base
-        cylinder(h=10, r=base_upper_r * base_w / 25);
+        scale([base_w/25, base_w2/25, 1]) cylinder(h=10, r=base_upper_r);
         first_x = base_w / brick_x / 2 + 1;
-        first_y = base_w / brick_y / 2 + 1;
+        first_y = base_w2 / brick_y / 2;
         // small translation for stetics
         translate([0,0.2,0]) union() {
             for(i=[-first_x:first_x]) {
                 for(j=[-first_y:first_y]) {
-                    translate([i*sep_x*brick_x + (j%2)*brick_o, j*sep_y*brick_y, 0]) brick(brick_x, brick_y, base_upper_h); // cuboid([brick_x,brick_y,base_upper_h*2], fillet=0.5);
+                    translate([i*sep_x*brick_x + (j%2)*brick_o, j*sep_y*brick_y, 0]) brick(brick_x, brick_y, base_upper_h, r=brick_r);
                 }
             }
         }
     }
 }
-module base_bricks(base_w, magnet_r, magnet_h) {
+module base_bricks(base_w, magnet_d, magnet_h) {
     scale([base_w / 25, base_w / 25, 1]) base_body(hole_r, hole_d);
-    translate([0, 0, 2.11]) bricks_surface(5.6, 3.9, 3.1, base_w, 1.2, 1.3);
-    magnet_encase(magnet_r/2.11, magnet_h, magnet_r/2+2, 2.45);
+    translate([0, 0, 2.11]) {
+        // use these number for the custom brick
+        bricks_surface(brick_x, brick_y, brick_offset, base_w, base_w, brick_sep_x, brick_sep_y);
+        // use these numbers for the hull() brick
+        //bricks_surface(5.6, 3.9, 3.1, base_w, base_w, 1.2, 1.3);
+    }
+    magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
 }
-module base_bricks_horses (base_w1, base_w2, magnet_r, magnet_h) {
-    scale([base_w1 / 25, base_w2 / 25, 1]) {
-        union() {
-            base_body(hole_r, hole_d);
-            translate([0, 0, 2.11]) bricks_surface(5.6, 3 * 25 / base_w2, 3.1, 25, 1.2, 1.7);
+module base_bricks_horses (base_w1, base_w2, magnet_d, magnet_h) {
+    union() {
+        scale([base_w/25, base_w2/25, 1]) base_body(hole_r, hole_d);
+        translate([0, 0, 2.11]) {
+            // use these number for the custom brick
+            bricks_surface(brick_x, brick_y, brick_offset, base_w, base_w2, brick_sep_x, brick_sep_y);
+            // use these numbers for the hull() brick
+            // bricks_surface(5.6, 3 * 25 / base_w2, base_w2, 3.1, 25, 1.2, 1.7);
         }
     }
-    translate([0, base_w2/4, 0]) magnet_encase(magnet_r/2, magnet_h, magnet_r/2+2, 2.45);
-    translate([0, -base_w2/4, 0]) magnet_encase(magnet_r/2, magnet_h, magnet_r/2+2, 2.45);
+    translate([0, base_w2/4, 0]) magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
+    translate([0, -base_w2/4, 0]) magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
 }
-module base_plates(base_w, magnet_r, magnet_h) {
+module base_plates(base_w, magnet_d, magnet_h) {
     scale([base_w / 25, base_w / 25, 1]) base_body(hole_r, hole_d);
-    translate([0, 0, 2.11]) bricks_surface(10, 10, 0, base_w);
-    magnet_encase(magnet_r/2.11, magnet_h, magnet_r/2+2, 2.45);
+    translate([0, 0, 2.11]) {
+        
+        // use these number for the custom brick
+        bricks_surface(10, 10, 0, base_w, base_w, 1.01, 1.01);
+        // use these numbers for the hull() brick
+        //bricks_surface(10, 10, 0, base_w);
+    }
+    magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
 }
 
 ////////////////////// grill surface
@@ -134,40 +186,40 @@ module grill_surface(grill_w, grill_s, base_w) {
         }
     }
 }
-module base_grill(base_w, magnet_r, magnet_h) {
+module base_grill(base_w, magnet_d, magnet_h) {
     scale([base_w / 25, base_w / 25, 1]) {
         union() {
             base_body(hole_r, hole_d);
         }
     }
     translate([0, 0, 2.11]) grill_surface(2, 0.5, base_w);
-    magnet_encase(magnet_r/2, magnet_h, magnet_r/2+2, 2.45);
+    magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
 }
 
 //////////////////////////////// bricks
 
-module base(base_texture, base_w, magnet_r, magnet_h) {
+module base(base_texture, base_w, magnet_d, magnet_h) {
     if(base_texture == 0) { // plain
-        base_plain(base_w, magnet_r, magnet_h);
+        base_plain(base_w, magnet_d, magnet_h);
     }
     if(base_texture == 1) { // plain horses
-        base_plain_horses(base_w, base_w2, magnet_r, magnet_h);
+        base_plain_horses(base_w, base_w2, magnet_d, magnet_h);
     }
     if(base_texture == 2) { // bricks
-        base_bricks(base_w, magnet_r, magnet_h);
+        base_bricks(base_w, magnet_d, magnet_h);
     }
     if(base_texture == 3) { // bricks horses
-        base_bricks_horses(base_w, base_w2, magnet_r, magnet_h);
+        base_bricks_horses(base_w, base_w2, magnet_d, magnet_h);
     }
     if(base_texture == 4) { // plates
-        base_plates(base_w, magnet_r, magnet_h);
+        base_plates(base_w, magnet_d, magnet_h);
     }
     if(base_texture == 5) { // grill
-        base_grill(base_w, magnet_r, magnet_h);
+        base_grill(base_w, magnet_d, magnet_h);
     }
 }
 
-base(base_texture, base_w, magnet_r, magnet_h);
+base(base_texture, base_w, magnet_d, magnet_h);
 
 
 
