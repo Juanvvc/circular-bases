@@ -166,7 +166,7 @@ module base_plates(base_w, magnet_d, magnet_h) {
     translate([0, 0, 2.11]) {
         
         // use these number for the custom brick
-        bricks_surface(10, 10, 0, base_w, base_w, 1.01, 1.01);
+        bricks_surface(10, 10, 0, base_w, base_w, 0.99, 0.99);
         // use these numbers for the hull() brick
         //bricks_surface(10, 10, 0, base_w);
     }
