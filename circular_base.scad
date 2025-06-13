@@ -7,7 +7,7 @@
 base_w = 25; // [10:100]
 // Secondary diameter of the base (mm). Only used for the horse bases
 base_w2 = 50; // [10:100]
-base_texture=0; //  [0:Plain, 1:PlainHorses, 2:Bricks, 3:BricksHorses, 4:Plates, 5:Grid]
+base_texture=0; //  [0:Plain, 1:PlainHorses, 2:Bricks, 3:BricksHorses, 4:Plates, 5:Grid, 6:pathway]
 // Diameter of the magnet hole (mm). Add 0.5 for some tolerance
 magnet_d = 5.5; // [2:0.5:10]
 // Height of the hole (mm). Add 0.1 for some tolerance
@@ -127,7 +127,7 @@ module bricks_surface(brick_x, brick_y, brick_o, base_w, base_w2, sep_x=1.2, sep
         // base_w: size of the base
         scale([base_w/25, base_w2/25, 1]) cylinder(h=10, r=base_upper_r);
         first_x = base_w / brick_x / 2 + 1;
-        first_y = base_w2 / brick_y / 2;
+        first_y = base_w2 / brick_y / 2 + 1;
         // small translation for stetics
         translate([0,0.2,0]) union() {
             for(i=[-first_x:first_x]) {
@@ -164,7 +164,6 @@ module base_bricks_horses (base_w1, base_w2, magnet_d, magnet_h) {
 module base_plates(base_w, magnet_d, magnet_h) {
     scale([base_w / 25, base_w / 25, 1]) base_body(hole_r, hole_d);
     translate([0, 0, 2.11]) {
-        
         // use these number for the custom brick
         bricks_surface(10, 10, 0, base_w, base_w, 0.99, 0.99);
         // use these numbers for the hull() brick
@@ -172,6 +171,16 @@ module base_plates(base_w, magnet_d, magnet_h) {
     }
     magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
 }
+
+module base_pathway(base_w, magnet_d, magnet_h) {
+    scale([base_w / 25, base_w / 25, 1]) base_body(hole_r, hole_d);
+    translate([0, 0, 2.11]) {
+        // use these number for the custom brick
+        bricks_surface(8, 8, 4, base_w, base_w, 0.9, 0.9);
+    }
+    magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
+}
+
 
 ////////////////////// grill surface
 module grill_surface(grill_w, grill_s, base_w) {
@@ -187,14 +196,11 @@ module grill_surface(grill_w, grill_s, base_w) {
     }
 }
 module base_grill(base_w, magnet_d, magnet_h) {
-    scale([base_w / 25, base_w / 25, 1]) {
-        union() {
-            base_body(hole_r, hole_d);
-        }
-    }
+    scale([base_w / 25, base_w / 25, 1]) base_body(hole_r, hole_d);
     translate([0, 0, 2.11]) grill_surface(2, 0.5, base_w);
     magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
 }
+
 
 //////////////////////////////// bricks
 
@@ -216,6 +222,9 @@ module base(base_texture, base_w, magnet_d, magnet_h) {
     }
     if(base_texture == 5) { // grill
         base_grill(base_w, magnet_d, magnet_h);
+    }
+    if(base_texture == 6) { // pathway
+        base_pathway(base_w, magnet_d, magnet_h);
     }
 }
 

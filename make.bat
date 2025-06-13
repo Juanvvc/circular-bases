@@ -2,10 +2,11 @@
 
 set OPENSCAD="C:\Program Files\OpenSCAD\openscad.exe"
 
-set BUILD_PLAIN=1
-set BUILD_BRICKS=1
-set BUILD_PLATES=1
-set BUILD_GRILL=1
+set BUILD_PLAIN=0
+set BUILD_BRICKS=0
+set BUILD_PLATES=0
+set BUILD_PATHWAY=0
+set BUILD_GRILL=0
 set BUILD_DOUBLE=1
 
 md output
@@ -34,6 +35,11 @@ IF %BUILD_PLATES% == 1 (
 %OPENSCAD% -D base_texture=4 -D base_w=25 -D base_w2=25 -o output\base_25mm_plates.stl -q --export-format binstl circular_base.scad
 )
 
+IF %BUILD_PATHWAY% == 1 (
+%OPENSCAD% -D base_texture=6 -D base_w=25 -D base_w2=25 -o output\base_25mm_pathway.png -q --autocenter circular_base.scad
+%OPENSCAD% -D base_texture=6 -D base_w=25 -D base_w2=25 -o output\base_25mm_pathway.stl -q --export-format binstl circular_base.scad
+)
+
 IF %BUILD_GRILL% == 1 (
 %OPENSCAD% -D base_texture=5 -D base_w=25 -o output\base_25mm_grill.png -q --autocenter circular_base.scad
 %OPENSCAD% -D base_texture=5 -D base_w=25 -o output\base_25mm_grill.stl -q --export-format binstl circular_base.scad
@@ -44,4 +50,6 @@ IF %BUILD_DOUBLE% == 1 (
 %OPENSCAD% -D base_texture=1 -D base_w=25 -o output\base_25x50mm_plain.stl -q --export-format binstl double_base.scad
 %OPENSCAD% -D base_texture=3 -D base_w=25 -o output\base_25x50mm_bricks.png -q --autocenter double_base.scad
 %OPENSCAD% -D base_texture=3 -D base_w=25 -o output\base_25x50mm_bricks.stl -q --export-format binstl double_base.scad
+%OPENSCAD% -D base_texture=6 -D base_w=25 -o output\base_25x50mm_pathway.png -q --autocenter double_base.scad
+%OPENSCAD% -D base_texture=6 -D base_w=25 -o output\base_25x50mm_pathway.stl -q --export-format binstl double_base.scad
 )

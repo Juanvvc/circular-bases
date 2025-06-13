@@ -84,8 +84,8 @@ module bricks_surface_double(brick_x, brick_y, brick_o, base_w, sep_x=1.2, sep_y
                 cube([base_upper_r*2, 25, 10]);
             }
         }
-        first_x = base_w / brick_x / 2 + 1;
-        first_y = 2 * base_w / brick_y;
+        first_x = base_w / brick_x / 2 + 2;
+        first_y = 2 * base_w / brick_y + 1;
         // small translation for stetics
         translate([0,0.2,0]) union() {
             for(i=[-first_x:first_x]) {
@@ -107,12 +107,26 @@ module base_bricks_double(base_w, magnet_d, magnet_h) {
     translate([0, base_w, 0]) magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
 }
 
+module base_pathway_double(base_w, magnet_d, magnet_h) {
+    union() {
+        scale([base_w/25, base_w/25, 1]) double_base_body(hole_r, hole_d);
+        translate([0, 0, 2.11]) {
+            bricks_surface_double(8, 8, 4, base_w, 0.9, 0.9);
+        }
+    }
+    magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
+    translate([0, base_w, 0]) magnet_encase(magnet_d, magnet_h, magnet_d+4, 2.45);
+}
+
 module base_double(base_texture, base_w, magnet_d, magnet_h) {
     if(base_texture == 0 || base_texture == 1) { // plain
         base_plain_double(base_w, magnet_d, magnet_h);
     }
     if(base_texture == 2 || base_texture == 3) { // bricks
         base_bricks_double(base_w, magnet_d, magnet_h);
+    }
+    if(base_texture == 6) { // pathway
+        base_pathway_double(base_w, magnet_d, magnet_h);
     }
 }
 
